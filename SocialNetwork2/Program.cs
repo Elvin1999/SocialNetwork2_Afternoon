@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SocialNetwork2.Data;
 using SocialNetwork2.Entities;
+using SocialNetwork2.Hubs;
 using SocialNetwork2.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +15,8 @@ builder.Services.AddDbContext<SocialDbContext>(options =>
 {
     options.UseSqlServer(conn);
 });
+
+builder.Services.AddSignalR();
 
 builder.Services.AddIdentity<CustomIdentityUser,CustomIdentityRole>()
     .AddEntityFrameworkStores<SocialDbContext>()
@@ -38,6 +41,8 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHub<ChatHub>("/chathub");
 
 app.MapControllerRoute(
     name: "default",

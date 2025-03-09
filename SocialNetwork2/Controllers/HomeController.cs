@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SocialNetwork2.Data;
 using SocialNetwork2.Entities;
 using SocialNetwork2.Models;
@@ -27,6 +28,17 @@ namespace SocialNetwork2.Controllers
             ViewBag.User = user;
 
             return View();
+        }
+
+
+        public async Task<ActionResult> GetAllUsers()
+        {
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+            var users = await _context.Users
+                .Where(u => u.Id != user.Id)
+                .ToListAsync();
+
+            return Ok(users);
         }
 
         public IActionResult Privacy()
