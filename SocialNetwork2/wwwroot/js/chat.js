@@ -32,3 +32,12 @@ connection.on("Disconnect", function (info) {
         element.style.display = "none";
     }, 5000);
 })
+
+async function SendFollowCall(id) {
+    await connection.invoke("SendFollow", id);
+}
+
+connection.on("ReceiveNotification", function () {
+    GetMyRequests();
+    GetAllUsers();
+})

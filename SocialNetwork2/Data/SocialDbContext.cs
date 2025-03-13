@@ -11,5 +11,16 @@ namespace SocialNetwork2.Data
         {
         }
 
+        public DbSet<Friend> Friends { get; set; }
+        public DbSet<FriendRequest> FriendRequests { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+
+            builder.Entity<CustomIdentityUser>().Ignore(e=>e.IsFriend);
+            builder.Entity<CustomIdentityUser>().Ignore(e=>e.IsOnline);
+            builder.Entity<CustomIdentityUser>().Ignore(e=>e.HasRequestPending);
+        }
     }
 }

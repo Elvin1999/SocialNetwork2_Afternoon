@@ -43,6 +43,10 @@ namespace SocialNetwork2.Hubs
             await Clients.Others.SendAsync("Disconnect", info);
         }
 
+        public async Task SendFollow(string id)
+        {
+            await Clients.User(id).SendAsync("ReceiveNotification");
+        }
 
     }
 }

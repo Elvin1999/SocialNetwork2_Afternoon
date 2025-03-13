@@ -41,6 +41,34 @@ namespace SocialNetwork2.Controllers
             return Ok(users);
         }
 
+        public async Task<ActionResult> SendFollow(string id)
+        {
+            var sender=await _userManager.GetUserAsync(HttpContext.User);
+            var receiverUser=await _userManager.Users.FirstOrDefaultAsync(u=>u.Id == id);
+            if (receiverUser != null)
+            {
+                _context.FriendRequests.Add(new FriendRequest
+                {
+                    Content=$"{sender.UserName} sent friend request at {DateTime.Now.ToLongDateString()}",
+                    SenderId=sender.Id,
+                    Sender=sender,
+                    ReceiverId=receiverUser.Id,
+                    Status="Request"
+                });
+
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            return BadRequest();
+        }
+
+        public async Task<ActionResult> GetAllRequests()
+        {
+            var current = await _userManager.GetUserAsync(HttpContext.User);
+            var requests = _context.FriendRequests.Where(r => r.ReceiverId == current.Id);
+            return Ok(requests);
+        }
+
         public IActionResult Privacy()
         {
             return View();
