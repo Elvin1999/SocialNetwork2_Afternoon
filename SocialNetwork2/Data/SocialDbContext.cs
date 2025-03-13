@@ -19,7 +19,6 @@ namespace SocialNetwork2.Data
             base.OnModelCreating(builder);
 
             builder.Entity<CustomIdentityUser>().Ignore(e=>e.IsFriend);
-            builder.Entity<CustomIdentityUser>().Ignore(e=>e.IsOnline);
             builder.Entity<CustomIdentityUser>().Ignore(e=>e.HasRequestPending);
         }
     }

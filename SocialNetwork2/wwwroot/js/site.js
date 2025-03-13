@@ -13,6 +13,13 @@ function GetAllUsers() {
             let content = "";
             for (var i = 0; i < data.length; i++) {
                 let style = "";
+                let subContent = "";
+                if (data[i].hasRequestPending) {
+                    subContent = "<button class='btn btn-success' >Already Sent</button>";
+                }
+                else {
+                    subContent = ` <button class='btn btn-success' onclick="SendFollow('${data[i].id}')" >Follow</button>`;
+                }
                 if (data[i].isOnline) {
                     style = "border:5px solid springgreen";
                 }
@@ -26,7 +33,7 @@ function GetAllUsers() {
                         <div class='card-body'>
                         <h5 class='card-title'>${data[i].userName}</h5>
                         <p> ${data[i].email} </p>
-                        <button class='btn btn-success' onclick="SendFollow('${data[i].id}')" >Follow</button>
+                            ${subContent}
                         </div>
                     </div>
                 `;

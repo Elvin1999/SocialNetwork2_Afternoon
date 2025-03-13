@@ -34,8 +34,20 @@ namespace SocialNetwork2.Controllers
         public async Task<ActionResult> GetAllUsers()
         {
             var user = await _userManager.GetUserAsync(HttpContext.User);
+
+            var myrequests = _context.FriendRequests.Where(r => r.SenderId == user.Id);
+
             var users = await _context.Users
                 .Where(u => u.Id != user.Id)
+                .Select(u => new CustomIdentityUser
+                {
+                    Id = u.Id,
+                    HasRequestPending = (myrequests.FirstOrDefault(r => r.ReceiverId == u.Id && r.Status == "Request") != null),
+                    UserName=u.UserName,
+                    IsOnline=u.IsOnline,
+                    Image=u.Image,
+                    Email=u.Email,  
+                })
                 .ToListAsync();
 
             return Ok(users);
@@ -43,17 +55,17 @@ namespace SocialNetwork2.Controllers
 
         public async Task<ActionResult> SendFollow(string id)
         {
-            var sender=await _userManager.GetUserAsync(HttpContext.User);
-            var receiverUser=await _userManager.Users.FirstOrDefaultAsync(u=>u.Id == id);
+            var sender = await _userManager.GetUserAsync(HttpContext.User);
+            var receiverUser = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == id);
             if (receiverUser != null)
             {
                 _context.FriendRequests.Add(new FriendRequest
                 {
-                    Content=$"{sender.UserName} sent friend request at {DateTime.Now.ToLongDateString()}",
-                    SenderId=sender.Id,
-                    Sender=sender,
-                    ReceiverId=receiverUser.Id,
-                    Status="Request"
+                    Content = $"{sender.UserName} sent friend request at {DateTime.Now.ToLongDateString()}",
+                    SenderId = sender.Id,
+                    Sender = sender,
+                    ReceiverId = receiverUser.Id,
+                    Status = "Request"
                 });
 
                 await _context.SaveChangesAsync();
