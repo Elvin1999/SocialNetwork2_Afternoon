@@ -81,6 +81,25 @@ namespace SocialNetwork2.Controllers
             return Ok(requests);
         }
 
+        public async Task<ActionResult> DeclineRequest(int id,string senderId)
+        {
+            var current = await _userManager.GetUserAsync(HttpContext.User);
+            var request = await _context.FriendRequests.FirstOrDefaultAsync(f => f.Id == id);
+            _context.FriendRequests.Remove(request);
+
+            _context.FriendRequests.Add(new FriendRequest
+            {
+                Content=$"{current.UserName} declined your friend request at {DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}",
+                SenderId = current.Id,
+                Sender=current,
+                ReceiverId = senderId,
+                Status="Notification"
+            });
+
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
         public IActionResult Privacy()
         {
             return View();
