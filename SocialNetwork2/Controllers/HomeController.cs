@@ -30,6 +30,39 @@ namespace SocialNetwork2.Controllers
             return View();
         }
 
+        public async Task<ActionResult> AcceptRequest(string senderId, string receiverId, int requestId)
+        {
+            var sender = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == senderId);
+            var receiver = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == receiverId);
+
+            if (receiver != null && sender != null)
+            {
+                await _context.FriendRequests.AddAsync(new FriendRequest
+                {
+                    Content = $"{receiver.UserName} accepted friend request at {DateTime.Now.ToShortDateString()}-{DateTime.Now.ToShortTimeString()}",
+                    SenderId = receiver.Id,
+                    ReceiverId = sender.Id,
+                    Sender = sender,
+                    Status = "Notification"
+                });
+
+                var request = await _context.FriendRequests.FirstOrDefaultAsync(r => r.Id == requestId);
+                if (request != null)
+                {
+                    _context.FriendRequests.Remove(request);
+                }
+                _context.Friends.Add(new Friend
+                {
+                    OwnId = sender.Id,
+                    YourFriendId = receiver.Id
+                });
+                await _context.SaveChangesAsync();
+
+                return Ok();
+            }
+
+            return BadRequest();
+        }
 
         public async Task<ActionResult> GetAllUsers()
         {
@@ -37,16 +70,19 @@ namespace SocialNetwork2.Controllers
 
             var myrequests = _context.FriendRequests.Where(r => r.SenderId == user.Id);
 
+            var myfriends = _context.Friends.Where(f => f.OwnId == user.Id || f.YourFriendId == user.Id);
+
             var users = await _context.Users
                 .Where(u => u.Id != user.Id)
                 .Select(u => new CustomIdentityUser
                 {
                     Id = u.Id,
                     HasRequestPending = (myrequests.FirstOrDefault(r => r.ReceiverId == u.Id && r.Status == "Request") != null),
-                    UserName=u.UserName,
-                    IsOnline=u.IsOnline,
-                    Image=u.Image,
-                    Email=u.Email,  
+                    IsFriend = myfriends.FirstOrDefault(f => f.OwnId == u.Id || f.YourFriendId == u.Id) != null,
+                    UserName = u.UserName,
+                    IsOnline = u.IsOnline,
+                    Image = u.Image,
+                    Email = u.Email,
                 })
                 .ToListAsync();
 
@@ -74,6 +110,27 @@ namespace SocialNetwork2.Controllers
             return BadRequest();
         }
 
+        [HttpDelete]
+        public async Task<ActionResult> DeleteRequest(int id)
+        {
+            var request = await _context.FriendRequests.FirstOrDefaultAsync(r => r.Id == id);
+            if (request == null) return NotFound();
+            _context.FriendRequests.Remove(request);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpDelete]
+        public async Task<ActionResult> TakeRequest(string id)
+        {
+            var current = await _userManager.GetUserAsync(HttpContext.User);
+            var request = await _context.FriendRequests.FirstOrDefaultAsync(r => r.SenderId == current.Id && r.ReceiverId == id);
+            if (request == null) return NotFound();
+            _context.FriendRequests.Remove(request);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
         public async Task<ActionResult> GetAllRequests()
         {
             var current = await _userManager.GetUserAsync(HttpContext.User);
@@ -81,7 +138,7 @@ namespace SocialNetwork2.Controllers
             return Ok(requests);
         }
 
-        public async Task<ActionResult> DeclineRequest(int id,string senderId)
+        public async Task<ActionResult> DeclineRequest(int id, string senderId)
         {
             var current = await _userManager.GetUserAsync(HttpContext.User);
             var request = await _context.FriendRequests.FirstOrDefaultAsync(f => f.Id == id);
@@ -89,11 +146,11 @@ namespace SocialNetwork2.Controllers
 
             _context.FriendRequests.Add(new FriendRequest
             {
-                Content=$"{current.UserName} declined your friend request at {DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}",
+                Content = $"{current.UserName} declined your friend request at {DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}",
                 SenderId = current.Id,
-                Sender=current,
+                Sender = current,
                 ReceiverId = senderId,
-                Status="Notification"
+                Status = "Notification"
             });
 
             await _context.SaveChangesAsync();

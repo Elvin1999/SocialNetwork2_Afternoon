@@ -14,10 +14,17 @@ function GetAllUsers() {
                 let style = "";
                 let subContent = "";
                 if (data[i].hasRequestPending) {
-                    subContent = "<button class='btn btn-success' >Already Sent</button>";
+                    subContent = `<button class='btn btn-outline-secondary' onclick="TakeRequest('${data[i].id}')" >Already Sent</button>`;
                 }
                 else {
-                    subContent = ` <button class='btn btn-success' onclick="SendFollow('${data[i].id}')" >Follow</button>`;
+                    if (data[i].isFriend) {
+                        subContent = ` <button class='btn btn-secondary' >UnFollow</button>
+                        <a class='btn btn-outline-success'>Go Chat</a>
+                        `;
+                    }
+                    else {
+                        subContent = ` <button class='btn btn-success' onclick="SendFollow('${data[i].id}')" >Follow</button>`;
+                    }
                 }
                 if (data[i].isOnline) {
                     style = "border:5px solid springgreen";
@@ -57,7 +64,7 @@ function GetMyRequests() {
                 if (data[i].status == "Request") {
                     subContent = `
                     <div class='card-body'>
-                        <button class='btn btn-success'>Accept</button>
+                        <button class='btn btn-success' onclick="AcceptRequest('${data[i].senderId}','${data[i].receiverId}',${data[i].id})">Accept</button>
                         <button class='btn btn-warning' onclick="DeclineRequest(${data[i].id},'${data[i].senderId}')">Decline</button>
                     </div>
                     `;
@@ -65,7 +72,7 @@ function GetMyRequests() {
                 else {
                     subContent = `
                     <div class='card-body'>
-                        <button class='btn btn-warning'>Delete</button>
+                        <button class='btn btn-warning' onclick="DeleteRequest(${data[i].id})">Delete</button>
                     </div>
                     `;
                 }
@@ -90,6 +97,36 @@ GetMyRequests();
 
 GetAllUsers();
 
+function DeleteRequest(id) {
+    $.ajax({
+        url: `/Home/DeleteRequest/${id}`,
+        method: 'DELETE',
+        success: function (data) {
+            GetMyRequests();
+        }
+    })
+}
+
+function AcceptRequest(senderId, receiverId, id) {
+    $.ajax({
+        url: `/Home/AcceptRequest?senderId=${senderId}&receiverId=${receiverId}&requestId=${id}`,
+        method: "GET",
+        success: function (data) {
+            const element = document.querySelector("#alert");
+            element.style.display = "block";
+            element.innerHTML = "You accept request successfully";
+
+            SendFollowCall(senderId);
+            SendFollowCall(receiverId);
+
+            setTimeout(() => {
+                element.innerHTML = "";
+                element.style.display = "none";
+            }, 5000);
+        }
+    })
+}
+
 function SendFollow(id) {
     const element = document.querySelector("#alert");
     element.style.display = "none";
@@ -109,7 +146,7 @@ function SendFollow(id) {
     })
 }
 
-function DeclineRequest(id,senderId) {
+function DeclineRequest(id, senderId) {
     $.ajax({
         url: `/Home/DeclineRequest?id=${id}&senderId=${senderId}`,
         method: "GET",
@@ -124,7 +161,27 @@ function DeclineRequest(id,senderId) {
             setTimeout(() => {
                 element.innerHTML = "";
                 element.style.display = "none";
-            },5000)
+            }, 5000)
+        }
+    })
+}
+
+function TakeRequest(receiverId) {
+    $.ajax({
+        url: `/Home/TakeRequest?id=${receiverId}`,
+        method: "DELETE",
+        success: function (data) {
+            const element = document.querySelector("#alert");
+            element.style.display = "block";
+            element.innerHTML = "You has taken your request successfully";
+
+            SendFollowCall(receiverId);
+            GetMyRequests();
+            GetAllUsers();
+            setTimeout(() => {
+                element.innerHTML = "";
+                element.style.display = "none";
+            }, 5000)
         }
     })
 }
