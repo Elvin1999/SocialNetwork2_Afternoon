@@ -19,7 +19,7 @@ function GetAllUsers() {
                 else {
                     if (data[i].isFriend) {
                         subContent = ` <button class='btn btn-secondary' onclick="UnFollow('${data[i].id}')" >UnFollow</button>
-                        <a class='btn btn-outline-success'>Go Chat</a>
+                        <a class='btn btn-outline-success' href='Home/GoChat/${data[i].id}'>Go Chat</a>
                         `;
                     }
                     else {
@@ -108,6 +108,74 @@ function UnFollow(receiverId) {
         }
     })
 }
+
+function GetSoundOfMessage() {
+    //var audio = new Audio('~/js/bip.mp3');
+    //audio.play();
+}
+
+function SendMessage(receiverId, senderId) {
+    const content = document.querySelector("#message-input");
+    let obj = {
+        receiverId: receiverId,
+        senderId: senderId,
+        content: content.value
+    };
+
+    $.ajax({
+        url: `/Home/AddMessage`,
+        method: "POST",
+        data:obj,
+        success: function (data) {
+            GetMessageCall(receiverId, senderId);
+            content.value = "";
+        }
+    })
+}
+
+function GetMessages(receiverId, senderId) {
+    console.log("receiverId", receiverId);
+    console.log("senderUd", senderId);
+   
+    $.ajax({
+        url: `/Home/GetAllMessages?receiverId=${receiverId}&senderId=${senderId}`,
+        method: "GET",
+        success: function (data) {
+            let content = "";
+            for (var i = 0; i < data.messages.length; i++) {
+                let item = ``;
+                if (data.currentUserId == data.messages[i].senderId) {
+                    item = ` 
+                    <section style="display:flex;margin-top:25px;border:4px solid springgreen;
+margin-left:150px;border-radius:20px 0 0 20px;width:50%;padding:20px;
+">
+                        <h5>${data.messages[i].content}</h5>
+                            <p>${data.messages[i].dateTime}</p>
+                        </section>
+                    `;
+                }
+                else {
+                    item = ` 
+                    <section style="display:flex;margin-top:25px;border:4px solid deepskyblue;
+margin-left:0;border-radius:0 20px 20px 0;width:50%;padding:20px;
+">
+                        <h5>${data.messages[i].content}</h5>
+                            <p>${data.messages[i].dateTime}</p>
+                        </section>
+                    `;
+                }
+                content += item;
+            }
+
+            $("#currentMessages").html(content);
+            var objDiv = document.getElementById("currentMessages");
+            objDiv.scrollTop = objDiv.scrollHeight;
+        }
+    })
+
+
+}
+
 
 function DeleteRequest(id) {
     $.ajax({

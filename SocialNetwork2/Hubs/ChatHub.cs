@@ -6,7 +6,7 @@ using SocialNetwork2.Entities;
 
 namespace SocialNetwork2.Hubs
 {
-    public class ChatHub:Hub
+    public class ChatHub : Hub
     {
         private readonly UserManager<CustomIdentityUser> _userManager;
         private readonly SocialDbContext _context;
@@ -22,7 +22,7 @@ namespace SocialNetwork2.Hubs
         public override async Task OnConnectedAsync()
         {
             var user = await _userManager.GetUserAsync(_contextAccessor.HttpContext.User);
-            var userItem =await _context.Users.FirstOrDefaultAsync(u => u.Id == user.Id);
+            var userItem = await _context.Users.FirstOrDefaultAsync(u => u.Id == user.Id);
             userItem.IsOnline = true;
             _context.Update(userItem);
             await _context.SaveChangesAsync();
@@ -43,6 +43,11 @@ namespace SocialNetwork2.Hubs
             await Clients.Others.SendAsync("Disconnect", info);
         }
 
+        public async Task GetMessages(string receiverId, string senderId)
+        {
+            await Clients.Users(new String[] { receiverId, senderId }).SendAsync("ReceiveMessages", receiverId, senderId);
+            await Clients.User(receiverId).SendAsync("GetSound");
+        }
         public async Task SendFollow(string id)
         {
             await Clients.User(id).SendAsync("ReceiveNotification");
