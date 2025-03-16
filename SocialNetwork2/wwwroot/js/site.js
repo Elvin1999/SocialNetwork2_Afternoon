@@ -18,7 +18,7 @@ function GetAllUsers() {
                 }
                 else {
                     if (data[i].isFriend) {
-                        subContent = ` <button class='btn btn-secondary' >UnFollow</button>
+                        subContent = ` <button class='btn btn-secondary' onclick="UnFollow('${data[i].id}')" >UnFollow</button>
                         <a class='btn btn-outline-success'>Go Chat</a>
                         `;
                     }
@@ -96,6 +96,18 @@ function GetMyRequests() {
 GetMyRequests();
 
 GetAllUsers();
+
+function UnFollow(receiverId) {
+    $.ajax({
+        url: `/Home/UnFollow?receiverId=${receiverId}`,
+        method: 'DELETE',
+        success: function (data) {
+            GetAllUsers();
+            GetMyRequests();
+            SendFollowCall(receiverId);
+        }
+    })
+}
 
 function DeleteRequest(id) {
     $.ajax({

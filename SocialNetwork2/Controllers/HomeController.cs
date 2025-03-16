@@ -89,6 +89,27 @@ namespace SocialNetwork2.Controllers
             return Ok(users);
         }
 
+        [HttpDelete]
+        public async Task<ActionResult> UnFollow(string receiverId)
+        {
+            var sender = await _userManager.GetUserAsync(HttpContext.User);
+            var receiver = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == receiverId);
+
+            var friend = await _context.Friends.FirstOrDefaultAsync(f => f.OwnId == sender.Id && f.YourFriendId == receiver.Id ||
+            f.OwnId == receiver.Id && f.YourFriendId == sender.Id);
+            _context.Friends.Remove(friend);
+
+            _context.FriendRequests.Add(new FriendRequest
+            {
+                Content = $"{sender.UserName} unfollowed you",
+                SenderId = sender.Id,
+                ReceiverId = receiverId,
+                Status = "Notification"
+            });
+
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
         public async Task<ActionResult> SendFollow(string id)
         {
             var sender = await _userManager.GetUserAsync(HttpContext.User);
